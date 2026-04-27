@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankAI | Predictive Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Light Mode Variables (Default) */
+        :root {
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --chart-grid: #e2e8f0;
+        }
+
+        /* Dark Mode Variables */
+        body.dark-mode {
+            --primary: #f8fafc;
+            --primary-light: #334155;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --chart-grid: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 260px;
+            background-color: #0f172a; 
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+        }
+
+        .brand-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .brand-area h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: white;
+        }
+
+        .nav-links-container { flex: 1; }
+
+        .nav-link {
+            padding: 12px 16px;
+            color: #cbd5e1;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.05);
+        }
+
+        .nav-link.active {
+            background-color: #1e293b;
+            color: white;
+            border-left: 3px solid #3b82f6;
+        }
+
+        /* Dark Mode Toggle Button */
+        .theme-toggle {
+            margin-top: auto;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #cbd5e1;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        header {
+            background-color: var(--surface);
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        /* --- TAB SYSTEM --- */
+        .tab-content {
+            display: none;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .guide-grid, .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        /* --- CARDS --- */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .card-header {
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-header h3 {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        /* --- FORM ELEMENTS --- */
+        .form-group { margin-bottom: 16px; }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background-color: var(--background);
+            color: var(--text-main);
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .grid-2-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        button.btn-primary {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+
+        button.btn-primary:hover { background-color: var(--accent-hover); }
+
+        /* --- RESULT AREA --- */
+        .result-empty {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 40px 0;
+            font-style: italic;
+        }
+
+        .prediction-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+        }
+
+        .badge-yes {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .badge-no {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .prob-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .gauge-container {
+            width: 220px;
+            height: 110px;
+            margin: 0 auto 30px auto;
+            position: relative;
+        }
+
+        .explanation-box {
+            background-color: var(--background);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        /* --- GUIDE TAB STYLES --- */
+        .guide-text { line-height: 1.6; margin-bottom: 16px; }
+        .example-box {
+            background: rgba(37, 99, 235, 0.05);
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+            margin-bottom: 20px;
+        }
+        .example-box.success { border-left-color: var(--success); }
+        .example-box.danger { border-left-color: var(--danger); }
+        .example-box code { font-weight: bold; color: var(--primary); }
+
+        /* --- METRICS TABLE STYLES --- */
+        .cm-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            margin-top: 10px;
+            color: var(--text-main);
+        }
+
+        .cm-table th, .cm-table td {
+            border: 1px solid var(--border);
+            padding: 12px;
+        }
+
+        .cm-table th { background-color: rgba(37, 99, 235, 0.1); color: var(--primary); font-weight: 600; }
+        .cm-cell-high { background-color: rgba(16, 185, 129, 0.15); font-weight: bold; }
+        .cm-cell-low { background-color: rgba(239, 68, 68, 0.15); }
+        
+        .report-table th { text-align: center; }
+        .report-table td:first-child { text-align: left; font-weight: 600; color: var(--primary); }
+
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand-area">
+           <div class="logo" style="background-color: transparent; width: 60px; height: 60px;">
+                <img src="{{ url_for('static', filename='BankAI_logo.png') }}" alt="BankAI Logo" style="max-width: 100%; height: auto;">
+            </div>
+            <h2>BankAI</h2>
+        </div>
+        
+        <div class="nav-links-container">
+            <div class="nav-link active" onclick="switchTab('dashboard', this)">Predictor Dashboard</div>
+            <div class="nav-link" onclick="switchTab('metrics', this)">Model Metrics</div>
+            <div class="nav-link" onclick="switchTab('guide', this)">System Guide & Examples</div>
+        </div>
+
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <svg id="theme-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            Toggle Dark Mode
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <header>
+            <h1 id="page-title">Term Deposit Prediction</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">ANN Deployment Module</p>
+        </header>
+
+        <div id="dashboard" class="tab-content active">
+            <div class="dashboard-grid">
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Customer Profile</h3>
+                    </div>
+                    
+                    <form action="/predict" method="post">
+                        <div class="grid-2-col">
+                            <div class="form-group">
+                                <label>Age</label>
+                                <input type="number" name="age" placeholder="e.g. 35" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Job Sector</label>
+                                <select name="job">
+                                    <option value="admin.">Admin</option>
+                                    <option value="technician">Technician</option>
+                                    <option value="services">Services</option>
+                                    <option value="management">Management</option>
+                                    <option value="blue-collar">Blue Collar</option>
+                                    <option value="retired">Retired</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid-2-col">
+                            <div class="form-group">
+                                <label>Marital Status</label>
+                                <select name="marital">
+                                    <option value="single">Single</option>
+                                    <option value="married">Married</option>
+                                    <option value="divorced">Divorced</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Education</label>
+                                <select name="education">
+                                    <option value="primary">Primary</option>
+                                    <option value="secondary">Secondary</option>
+                                    <option value="tertiary">Tertiary</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid-2-col">
+                            <div class="form-group">
+                                <label>Housing Loan</label>
+                                <select name="housing">
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Personal Loan</label>
+                                <select name="loan">
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="card-header" style="margin-top: 10px;">
+                            <h3>Campaign History</h3>
+                        </div>
+
+                        <div class="grid-2-col">
+                            <div class="form-group">
+                                <label>Contacts this Campaign</label>
+                                <input type="number" name="campaign" placeholder="e.g. 1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Days Since Last Contact (pdays)</label>
+                                <input type="number" name="pdays" placeholder="Use 999 if never" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Analyze Customer</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>AI Analysis Result</h3>
+                    </div>
+
+                    {% if prediction_text %}
+                        <div style="text-align: center; margin-bottom: 10px;">
+                            {% if 'YES' in prediction_text %}
+                                <div class="prediction-badge badge-yes">LIKELY TO SUBSCRIBE (YES)</div>
+                            {% else %}
+                                <div class="prediction-badge badge-no">UNLIKELY TO SUBSCRIBE (NO)</div>
+                            {% endif %}
+                            <div class="prob-text" id="prob-value">{{ probability }}</div>
+                        </div>
+
+                        <div class="gauge-container">
+                            <canvas id="gaugeChart"></canvas>
+                        </div>
+
+                        <div class="explanation-box">
+                            <p style="font-weight: 600; margin-bottom: 12px; color: var(--primary);">{{ summary }}</p>
+                            <ul style="padding-left: 20px; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+                                {% for r in reasons %}
+                                    <li style="margin-bottom: 6px;">{{ r }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        <div class="result-empty">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3; margin-bottom: 16px;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 16 16 12 22 6"></polyline>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                            </svg>
+                            <p>Enter customer details and click analyze to view the ANN prediction, probability gauge, and explanation.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+
+        <div id="metrics" class="tab-content">
+            <div class="metrics-grid">
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Classification Report</h3>
+                    </div>
+                    <p style="color: var(--text-muted); margin-bottom: 16px; font-size: 0.95rem;">
+                        Detailed performance metrics for the Artificial Neural Network on the validation dataset.
+                    </p>
+                    <table class="cm-table report-table">
+                        <tr>
+                            <th>Class (Outcome)</th>
+                            <th>Precision</th>
+                            <th>Recall</th>
+                            <th>F1-Score</th>
+                            <th>Support</th>
+                        </tr>
+                        <tr>
+                            <td>NO (Will Not Subscribe)</td>
+                            <td>0.94</td>
+                            <td>0.97</td>
+                            <td>0.95</td>
+                            <td>7,520</td>
+                        </tr>
+                        <tr>
+                            <td>YES (Will Subscribe)</td>
+                            <td>0.66</td>
+                            <td>0.46</td>
+                            <td>0.54</td>
+                            <td>928</td>
+                        </tr>
+                        <tr style="background-color: rgba(0,0,0,0.02);">
+                            <td><strong>Accuracy</strong></td>
+                            <td></td>
+                            <td></td>
+                            <td><strong>0.89</strong></td>
+                            <td><strong>8,448</strong></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Model Evaluation: Confusion Matrix</h3>
+                    </div>
+                    <table class="cm-table">
+                        <tr>
+                            <th></th>
+                            <th>Predicted: NO</th>
+                            <th>Predicted: YES</th>
+                        </tr>
+                        <tr>
+                            <th>Actual: NO</th>
+                            <td class="cm-cell-high">7,303 (True Negatives)</td>
+                            <td class="cm-cell-low">217 (False Positives)</td>
+                        </tr>
+                        <tr>
+                            <th>Actual: YES</th>
+                            <td class="cm-cell-low">498 (False Negatives)</td>
+                            <td class="cm-cell-high">430 (True Positives)</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>ANN Training Progress (Loss & Accuracy)</h3>
+                    </div>
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="trainingChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="guide" class="tab-content">
+            <div class="guide-grid">
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3>How the ANN Model Works</h3>
+                    </div>
+                    <p class="guide-text">BankAI utilizes a Supervised Artificial Neural Network (ANN) trained on historical telemarketing data to predict if a customer will subscribe to a term deposit. It analyzes 8 key demographic and historical features to calculate a probability score.</p>
+                    <p class="guide-text">The Explainable AI (XAI) module then processes the input data against standard financial logic to generate human-readable reasons explaining <i>why</i> the model made its decision.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Example Inputs for Testing</h3>
+                    </div>
+                    
+                    <p class="guide-text">To see the extremes of the AI's predictions, try copying these exact profiles into the Predictor Dashboard.</p>
+
+                    <div class="example-box success">
+                        <h4 style="color: var(--success); margin-bottom: 10px;">🟢 The "Ideal Customer" (Predicts YES)</h4>
+                        <p style="margin-bottom: 10px; font-size: 0.95rem;">This profile represents a financially stable individual who had a positive, very recent interaction with the bank.</p>
+                        <ul style="list-style: none; font-size: 0.9rem; line-height: 1.8;">
+                            <li>• <b>Age:</b> <code>45</code></li>
+                            <li>• <b>Job:</b> <code>Management</code></li>
+                            <li>• <b>Marital:</b> <code>Single</code></li>
+                            <li>• <b>Education:</b> <code>Tertiary</code></li>
+                            <li>• <b>Housing Loan:</b> <code>No</code> | <b>Personal Loan:</b> <code>No</code></li>
+                            <li>• <b>Campaign Contacts:</b> <code>1</code></li>
+                            <li>• <b>Pdays (Crucial):</b> <code>3</code> (Contacted just 3 days ago)</li>
+                        </ul>
+                    </div>
+
+                    <div class="example-box danger">
+                        <h4 style="color: var(--danger); margin-bottom: 10px;">🔴 The "Unlikely Customer" (Predicts NO)</h4>
+                        <p style="margin-bottom: 10px; font-size: 0.95rem;">This profile represents an individual with potential financial burdens and poor/no recent campaign interaction.</p>
+                        <ul style="list-style: none; font-size: 0.9rem; line-height: 1.8;">
+                            <li>• <b>Age:</b> <code>25</code></li>
+                            <li>• <b>Job:</b> <code>Services</code></li>
+                            <li>• <b>Marital:</b> <code>Married</code></li>
+                            <li>• <b>Education:</b> <code>Secondary</code></li>
+                            <li>• <b>Housing Loan:</b> <code>Yes</code> | <b>Personal Loan:</b> <code>Yes</code></li>
+                            <li>• <b>Campaign Contacts:</b> <code>5</code> (Contacted too many times)</li>
+                            <li>• <b>Pdays:</b> <code>999</code> (Never successfully contacted before)</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- 1. TAB SWITCHING LOGIC ---
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            element.classList.add('active');
+
+            const titles = {
+                'dashboard': 'Term Deposit Prediction',
+                'metrics': 'ANN Model Performance',
+                'guide': 'System Guide & Testing'
+            };
+            document.getElementById('page-title').innerText = titles[tabId];
+
+            if(tabId === 'metrics' && window.trainingChartInstance) {
+                window.trainingChartInstance.resize();
+            }
+        }
+
+        // --- 2. DARK MODE TOGGLE ---
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            
+            const iconPath = isDark 
+                ? '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>'
+                : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+            document.getElementById('theme-icon').innerHTML = iconPath;
+
+            Chart.defaults.color = isDark ? '#94a3b8' : '#64748b';
+            Chart.defaults.borderColor = isDark ? '#334155' : '#e2e8f0';
+            if(window.trainingChartInstance) window.trainingChartInstance.update();
+        }
+
+        // --- 3. CHART.JS RENDERING ---
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#64748b';
+
+            const probElement = document.getElementById("prob-value");
+            if(probElement) {
+                const text = probElement.innerText;
+                const match = text.match(/[\d\.]+/);
+                
+                if(match) {
+                    const probValue = parseFloat(match[0]);
+                    const ctxGauge = document.getElementById('gaugeChart').getContext('2d');
+                    const gaugeColor = probValue > 50.0 ? '#10b981' : '#ef4444';
+
+                    new Chart(ctxGauge, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Confidence', 'Remaining'],
+                            datasets: [{
+                                data: [probValue, 100 - probValue],
+                                backgroundColor: [gaugeColor, 'rgba(100, 116, 139, 0.2)'],
+                                borderWidth: 0,
+                                circumference: 180,
+                                rotation: 270,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '80%',
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { enabled: false }
+                            }
+                        }
+                    });
+                }
+            }
+
+            const ctxTraining = document.getElementById('trainingChart').getContext('2d');
+            window.trainingChartInstance = new Chart(ctxTraining, {
+                type: 'line',
+                data: {
+                    labels: ['1', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20'],
+                    datasets: [
+                        {
+                            label: 'Model Accuracy (%)',
+                            data: [75.2, 78.4, 82.1, 84.5, 86.0, 87.2, 88.1, 88.5, 88.9, 89.1, 89.2],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Training Loss',
+                            data: [0.65, 0.52, 0.41, 0.35, 0.30, 0.27, 0.25, 0.24, 0.23, 0.22, 0.21],
+                            borderColor: '#ef4444',
+                            borderDash: [5, 5],
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    },
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
