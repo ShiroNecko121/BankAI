@@ -68,7 +68,7 @@ def predict_output(input_dict):
     data = scaler.transform(data)
 
     # Make the prediction instantly using the pre-trained ANN
-    prediction = model.predict(data)
+    prediction = model(data, training=False)
     prob = float(prediction[0][0])
 
     label = "YES" if prob > 0.5 else "NO"
